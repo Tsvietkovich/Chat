@@ -1,0 +1,56 @@
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+import java.util.function.Consumer;
+
+public class ClientsList {
+    private static final ClientsList clientsList = new ClientsList();
+
+    private final List<Client> currentList = new LinkedList<>();
+    private final Gson gson;
+
+    public static ClientsList getInstance() {
+        return clientsList;
+    }
+
+    private ClientsList() {
+        gson = new GsonBuilder().create();
+    }
+
+    public synchronized void addClient(Client client) {
+        currentList.add(client);
+    }
+
+
+    public Boolean checkClient(Client client) {
+        Boolean checker = false;
+        for (Client c : currentList) {
+            if (c.getLogin().equals(client.getLogin()) && c.getPassword().equals(client.getPassword())) {
+                checker = true;//if exist => ok =>move on
+            }
+            else checker = false; // if not => create one and move on
+        }
+        return checker;
+    }
+
+    public synchronized String toJSON() {
+        return gson.toJson(new JsonClients(currentList));
+    }
+
+    public synchronized Client findeClientByLogin(String login) {
+        for (Client c : currentList) {
+            if (c.getLogin().equals("login")) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    public synchronized void changeStatus (Client client){
+        this.findeClientByLogin(client.getLogin()).setStatus("offline");
+    }
+
+}
