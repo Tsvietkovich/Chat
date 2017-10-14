@@ -1,0 +1,15 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+public class JsonClients {
+
+    private final List<Client> list;
+
+    public JsonClients(List<Client> sourceList) {
+        this.list = new ArrayList<>();
+        for (Client c : sourceList)
+            list.add(c);
+    }
+}
