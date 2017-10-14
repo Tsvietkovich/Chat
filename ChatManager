@@ -1,0 +1,114 @@
+package Client;
+
+import java.io.IOException;
+import java.util.Scanner;
+
+public class ChatManager {
+    private Scanner scanner;
+
+    public ChatManager(Scanner scanner) {
+        this.scanner = scanner;
+    }
+
+    public void start(Client client) {
+        Message.addChatRoom("toAll");
+        printOptions(client);
+    }
+
+    private void printOptions(Client client){
+
+        System.out.println("Option list");
+        System.out.println("1. Show clients: ");
+        System.out.println("2. Create chat room: ");
+        System.out.println("3. Sent message in chat: ");
+        System.out.println("4. Private massage: write (whom->msg)");
+        System.out.println("Leave the chat, write exit");
+        String option = scanner.nextLine();
+        process(option,client);
+    }
+    private void process(String option, Client client){
+        if ("exit".equals(option.trim())) {//logOut changeStatus
+            try {
+                client.setStatus("offline");
+                client.logInToServer(Utils.getURL()+"/login");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if ("1".equals(option.trim())){
+            client.getListOfClients(client.getLogin());
+            printOptions(client);
+        }
+
+        if ("2".equals(option.trim())){
+            System.out.println("Enter name of chat room: ");
+            String name = scanner.nextLine();
+            if (checkChatRooms(name)) {
+                startChat(name, client);
+            }else if (!checkChatRooms(name)){
+                System.out.println("Do you want enter this room? (yes/no)");
+                String answer = scanner.nextLine();
+                if ("yes".equals(answer.trim())){
+                    startChat(name,client);
+                }else printOptions(client);
+            }
+
+        }
+        if ("3".equals(option.trim())){
+                startChat("toAll",client);
+        }
+        if ("4".equals(option.trim())) startChat("private",client);
+
+    }
+
+    private boolean checkChatRooms(String name) {
+        Boolean mark = true;
+        for (String rooms : Message.getChatRoomsName()) {
+            if (rooms.equals(name)) {
+                System.out.println("Chat room with this name " + name + " exist");
+                mark =false;
+            }
+            else if (!rooms.equals(name)){
+                System.out.println("Chat room with this name " + name + " was created");
+                Message.addChatRoom(name);
+                mark = true;
+            }
+        }
+        return mark;
+
+        }
+
+    private void startChat(String nameOfRoom, Client client) {
+        try {
+            Thread th = new Thread(new GetThread(client.getLogin(), nameOfRoom));
+            th.setDaemon(true);
+            th.start();
+            String text = new String();
+            System.out.println("If you want to go back to options, write exit");
+            while (!("exit").equals(text.trim())) {
+                System.out.println("Enter your message: ");
+                text = scanner.nextLine();
+                if (text.isEmpty()) {
+                    continue;
+                }
+                Message m;
+                if (text.contains("->")){
+                    String[] cell = text.split("->");
+                    m = new Message(nameOfRoom, client.getLogin(), cell[0], cell[1]);
+                } else {
+                    m = new Message(nameOfRoom, client.getLogin(), text);
+                }
+
+                int res = m.send(Utils.getURL() + "/add");
+                if (res != 200) { // 200 OK
+                    System.out.println("HTTP error occured: " + res);
+                    return;
+                }
+            }
+            printOptions(client);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
