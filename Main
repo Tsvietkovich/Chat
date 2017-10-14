@@ -1,0 +1,37 @@
+package Client;
+
+import java.io.IOException;
+import java.time.LocalTime;
+import java.util.Scanner;
+
+public class Main {
+
+
+	public static void main(String[] args) {
+		Scanner scanner = new Scanner(System.in);
+		ChatManager manager = new ChatManager(scanner);
+		try {
+			System.out.println("Pleas LogIn.");
+			System.out.println("Enter your login: ");
+			String login = scanner.nextLine();
+			System.out.println("Enter your password: ");
+			String password = scanner.nextLine();
+			Client client = new Client(login.trim(),password.trim());
+			client.setStatus("online");
+			int code = client.logInToServer(Utils.getURL()+"/login");
+			if (code != 200) { // 200 OK
+				System.out.println("HTTP error occured: " + code);
+				return;
+			}
+
+			manager.start(client);
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			scanner.close();
+		}
+	}
+
+
+}
